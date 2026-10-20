@@ -28,7 +28,7 @@ npm i -g https://github.com/rustemmustafingovua-byte/prompt-budget/releases/down
 ```
 
 <details>
-<summary>Через GitHub Packages</summary>
+<summary>Через GitHub Packages (нужен токен со scope read:packages)</summary>
 
 ```bash
 npm i -g @rustemmustafingovua-byte/prompt-budget --registry=https://npm.pkg.github.com
