@@ -1,0 +1,43 @@
+{
+  "name": "prompt-budget",
+  "version": "0.1.0",
+  "description": "Every request re-sends your system prompt, the tool schemas and the rules file. On a metered model that is the dominant cost; on a free tier it is what burns the daily pool. prompt-budget measures all of it before you ship it.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "prompt-budget": "bin/prompt-budget.js"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "prompt-engineering",
+    "tokens",
+    "cost-optimization",
+    "context-window",
+    "agents",
+    "llm",
+    "budget"
+  ],
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "node --check src/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rustemmustafingovua-byte/prompt-budget.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rustemmustafingovua-byte/prompt-budget/issues"
+  },
+  "homepage": "https://github.com/rustemmustafingovua-byte/prompt-budget"
+}
