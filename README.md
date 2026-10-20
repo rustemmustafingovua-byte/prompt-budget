@@ -23,9 +23,18 @@ Every request re-sends your system prompt, the tool schemas and the rules file. 
 ## Install
 
 ```bash
-npm i -g prompt-budget
+# tarball из релиза: без токена и без npm-логина
+npm i -g https://github.com/rustemmustafingovua-byte/prompt-budget/releases/download/v0.1.0/prompt-budget-0.1.0.tgz
 ```
 
+<details>
+<summary>Через GitHub Packages</summary>
+
+```bash
+npm i -g @rustemmustafingovua-byte/prompt-budget --registry=https://npm.pkg.github.com
+```
+
+</details>
 ## What it does
 
 | | |
