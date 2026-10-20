@@ -8,6 +8,19 @@
 import { readFileSync, existsSync } from "node:fs"
 import { report } from "../src/index.js"
 
+// --- CLI shell: --help / --version -------------------------------------------
+const HELP = "prompt-budget — What does your system prompt actually cost on every request?\n\nUSAGE\n  prompt-budget AGENTS.md\n  prompt-budget AGENTS.md --tools tools.json --calls 50\n\nCOMMANDS / OPTIONS\n  --tools <file>     also measure the tool schemas\n  --calls <n>        requests per session (default 50)\n  --price-in <usd>   input price per 1M tokens (default 3)\n  --price-out <usd>  output price per 1M tokens (default 15)\n\nMIT · https://github.com/rustemmustafingovua-byte"
+const VERSION = "0.1.0"
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(HELP)
+  process.exit(0)
+}
+if (process.argv.includes("--version") || process.argv.includes("-V")) {
+  console.log(VERSION)
+  process.exit(0)
+}
+
+
 const argv = process.argv.slice(2)
 const file = argv.find((a) => !a.startsWith("--"))
 const arg = (n, d) => {
