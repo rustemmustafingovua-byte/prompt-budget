@@ -43,6 +43,24 @@ prompt-budget AGENTS.md
 prompt-budget AGENTS.md --tools tools.json --calls 50
 ```
 
+## CLI
+
+```
+prompt-budget — What does your system prompt actually cost on every request?
+
+USAGE
+  prompt-budget AGENTS.md
+  prompt-budget AGENTS.md --tools tools.json --calls 50
+
+COMMANDS / OPTIONS
+  --tools <file>     also measure the tool schemas
+  --calls <n>        requests per session (default 50)
+  --price-in <usd>   input price per 1M tokens (default 3)
+  --price-out <usd>  output price per 1M tokens (default 15)
+
+MIT · https://github.com/rustemmustafingovua-byte
+```
+
 ## Part of a portfolio
 
 | Project | What it does |
