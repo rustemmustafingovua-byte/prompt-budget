@@ -57,7 +57,7 @@ export function analyseFile(name, content) {
 export function analyseTools(tools) {
   const list = Array.isArray(tools) ? tools : tools?.tools || []
   const perTool = list.map((t) => ({
-    name: t.name,
+    name: t?.name || t?.function?.name || "(unnamed)",
     tokens: estimateTokens(JSON.stringify(t)),
   }))
   return {
@@ -65,6 +65,142 @@ export function analyseTools(tools) {
     tokens: perTool.reduce((n, t) => n + t.tokens, 0),
     perTool: perTool.sort((a, b) => b.tokens - a.tokens),
   }
+}
+
+function extractTextContent(value) {
+  if (typeof value === "string") return value
+  if (Array.isArray(value)) {
+    return value
+      .map((part) => {
+        if (typeof part === "string") return part
+        if (part && typeof part === "object") {
+          if (typeof part.text === "string") return part.text
+          if (typeof part.content === "string") return part.content
+        }
+        return ""
+      })
+      .filter(Boolean)
+      .join("\n\n")
+  }
+  return ""
+}
+
+function unwrapRequestCandidate(entry) {
+  if (!entry || typeof entry !== "object") return null
+  if (entry.request && typeof entry.request === "object") return unwrapRequestCandidate(entry.request)
+  if (entry.payload && typeof entry.payload === "object") return unwrapRequestCandidate(entry.payload)
+  if (entry.body && typeof entry.body === "object") return unwrapRequestCandidate(entry.body)
+  if (entry.input && typeof entry.input === "object" && !Array.isArray(entry.input)) {
+    if ("system" in entry.input || "tools" in entry.input || "messages" in entry.input) {
+      return entry.input
+    }
+  }
+  const hasRequestShape =
+    "system" in entry ||
+    "instructions" in entry ||
+    "tools" in entry ||
+    "mcpTools" in entry ||
+    "functions" in entry ||
+    "rules" in entry ||
+    Array.isArray(entry.messages)
+  return hasRequestShape ? entry : null
+}
+
+function parseSessionEntries(raw) {
+  if (typeof raw !== "string") {
+    if (Array.isArray(raw)) return raw
+    if (raw && typeof raw === "object") {
+      for (const key of ["requests", "turns", "events", "entries", "history", "calls"]) {
+        if (Array.isArray(raw[key])) return raw[key]
+      }
+      return [raw]
+    }
+    return []
+  }
+
+  const trimmed = raw.trim()
+  if (!trimmed) return []
+
+  // Try single JSON document first (object or array)
+  try {
+    const parsed = JSON.parse(trimmed)
+    return parseSessionEntries(parsed)
+  } catch {
+    // Fall through to JSONL parsing
+  }
+
+  const entries = []
+  for (const line of trimmed.split(/\r?\n/)) {
+    const l = line.trim()
+    if (!l) continue
+    try {
+      entries.push(JSON.parse(l))
+    } catch {
+      // Skip non-JSON log lines interleaved in runtime logs
+    }
+  }
+  return entries
+}
+
+/**
+ * Extract the system prompt / rules text and tool schemas from the last
+ * request in an agent session log (JSON, JSONL, or parsed object/array).
+ */
+export function extractLastRequest(sessionInput) {
+  const entries = parseSessionEntries(sessionInput)
+  let req = null
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const candidate = unwrapRequestCandidate(entries[i])
+    if (candidate) {
+      req = candidate
+      break
+    }
+  }
+  if (!req) {
+    throw new Error("no agent request found in session log")
+  }
+
+  const ruleParts = []
+  if (typeof req.rules === "string" && req.rules) {
+    ruleParts.push(req.rules)
+  }
+  const systemText = extractTextContent(req.system)
+  if (systemText) ruleParts.push(systemText)
+
+  const instructionsText = extractTextContent(req.instructions)
+  if (instructionsText) ruleParts.push(instructionsText)
+
+  if (Array.isArray(req.messages)) {
+    for (const msg of req.messages) {
+      if (!msg || typeof msg !== "object") continue
+      if (msg.role === "system" || msg.role === "developer") {
+        const text = extractTextContent(msg.content)
+        if (text) ruleParts.push(text)
+      }
+    }
+  }
+
+  const rawTools = Array.isArray(req.tools)
+    ? req.tools
+    : Array.isArray(req.mcpTools)
+      ? req.mcpTools
+      : Array.isArray(req.functions)
+        ? req.functions
+        : req.tools?.tools || []
+
+  return {
+    rules: ruleParts.join("\n\n"),
+    tools: rawTools,
+  }
+}
+
+/**
+ * Measure the last request of a running agent session using the exact same
+ * report pipeline as static `report({ rules, tools })`.
+ */
+export function reportSession(sessionInput, { callsPerSession = 50, priceIn = 3, priceOut = 15 } = {}) {
+  const { rules, tools } = extractLastRequest(sessionInput)
+  return report({ rules, tools, callsPerSession, priceIn, priceOut })
 }
 
 /**
