@@ -50,6 +50,21 @@ npm i -g @rustemmustafingovua-byte/prompt-budget --registry=https://npm.pkg.gith
 ```bash
 prompt-budget AGENTS.md
 prompt-budget AGENTS.md --tools tools.json --calls 50
+prompt-budget --session session.jsonl --calls 50
+prompt-budget --session ./sessions/ --json
+cat last-request.json | prompt-budget --session -
+```
+
+### Inspecting a running agent session (`--session`)
+
+Pass a session log file (JSON or JSONL), a directory of session logs (inspects the most recently modified `.json`/`.jsonl` file), or `-` for stdin. `prompt-budget` extracts the system prompt / rules and MCP or function tool schemas from the **last request** in the session (supporting Anthropic Messages, OpenAI Chat/Responses, and `{ request | payload | body }` log wrappers) and feeds them into the exact same `report()` pipeline as static mode.
+
+Programmatic API:
+
+```js
+import { extractLastRequest, reportSession } from "prompt-budget"
+
+const result = reportSession(sessionJsonlText, { callsPerSession: 50 })
 ```
 
 ## CLI
@@ -60,12 +75,15 @@ prompt-budget — What does your system prompt actually cost on every request?
 USAGE
   prompt-budget AGENTS.md
   prompt-budget AGENTS.md --tools tools.json --calls 50
+  prompt-budget --session session.jsonl [--calls 50] [--json]
 
 COMMANDS / OPTIONS
   --tools <file>     also measure the tool schemas
+  --session <path>   inspect the last request from a session JSON/JSONL file, directory, or "-" (stdin)
   --calls <n>        requests per session (default 50)
   --price-in <usd>   input price per 1M tokens (default 3)
   --price-out <usd>  output price per 1M tokens (default 15)
+  --json             print machine-readable JSON output
 
 MIT · https://github.com/rustemmustafingovua-byte
 ```
